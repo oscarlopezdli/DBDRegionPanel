@@ -101,4 +101,4 @@ function copyKey(el, key) {
     }, 2000);
 }
 
-windo.onload = loadKeys;
+window.onload = loadKeys;
