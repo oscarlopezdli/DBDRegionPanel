@@ -7,6 +7,13 @@ async function loadKeys() {
         const res = await fetch(`${API_URL}/keys`, {
             headers: { "X-Admin-Password": ADMIN_PASSWORD }
         });
+        
+        if (res.status === 401) {
+            document.getElementById("keys-body").innerHTML = 
+                '<tr><td colspan="6" class="loading">Invalid password.</td></tr>';
+            return;
+        }
+
         allKeys = await res.json();
         renderKeys(allKeys);
         updateStats(allKeys);
