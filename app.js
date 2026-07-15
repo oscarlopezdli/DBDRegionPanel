@@ -1,9 +1,12 @@
 const API_URL = "https://dbdregionpanelapi-1.onrender.com";
+const ADMIN_PASSWORD = prompt("Enter admin password:");
 let allKeys = [];
 
-async function fetchKeys() {
+async function loadKeys() {
     try {
-        const res = await fetch(`${API_URL}/keys`);
+        const res = await fetch(`${API_URL}/keys`, {
+            headers: { "X-Admin-Password": ADMIN_PASSWORD }
+        });
         allKeys = await res.json();
         renderKeys(allKeys);
         updateStats(allKeys);
@@ -48,7 +51,7 @@ function getBadge(status) {
 
 function filterKeys() {
     const query = document.getElementById("search").value.toLowerCase();
-    const filtered = allKeys.filter(k => 
+    const filtered = allKeys.filter(k =>
         k.key.toLowerCase().includes(query) ||
         k.hwid.toLowerCase().includes(query)
     );
@@ -57,13 +60,19 @@ function filterKeys() {
 
 async function revokeKey(row) {
     if (!confirm("Revoke this key?")) return;
-    await fetch(`${API_URL}/keys/${row}/revoke`, { method: "POST" });
+    await fetch(`${API_URL}/keys/${row}/revoke`, {
+        method: "POST",
+        headers: { "X-Admin-Password": ADMIN_PASSWORD }
+    });
     loadKeys();
 }
 
 async function deleteKey(row) {
-    if (!confirm("Delete this key?")) return;
-    await fetch(`${API_URL}/keys/${row}/delete`, { method: "DELETE" });
+    if (!confirm("Delete this key permanently?")) return;
+    await fetch(`${API_URL}/keys/${row}/delete`, {
+        method: "DELETE",
+        headers: { "X-Admin-Password": ADMIN_PASSWORD }
+    });
     loadKeys();
 }
 
@@ -80,15 +89,18 @@ async function generateKeys() {
     const amount = parseInt(document.getElementById("generate-amount").value);
     const res = await fetch(`${API_URL}/keys/generate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json",
+            "X-Admin-Password": ADMIN_PASSWORD
+        },
         body: JSON.stringify({ amount })
     });
     const data = await res.json();
     const list = document.getElementById("generated-keys-list");
     list.innerHTML = data.keys.map(k => `
-        <div class="generated-key"> onclick="copyKey(this, '${k}')">${k}</div>
-        `).join("");
-        loadKeys();
+        <div class="generated-key" onclick="copyKey(this, '${k}')">${k}</div>
+    `).join("");
+    loadKeys();
 }
 
 function copyKey(el, key) {
